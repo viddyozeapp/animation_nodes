@@ -79,10 +79,12 @@ def executeInAreaType(areaType):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
             area = bpy.context.area
-            oldType = area.type
-            area.type = areaType
+            if area:
+                oldType = area.type
+                area.type = areaType
             output = function(*args, **kwargs)
-            area.type = oldType
+            if area:
+                area.type = oldType
             return output
         return wrapper
     return changeAreaTypeDecorator
