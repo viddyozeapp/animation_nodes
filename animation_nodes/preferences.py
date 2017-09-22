@@ -187,8 +187,22 @@ class AddonPreferences(bpy.types.AddonPreferences):
             col.label("1. Disable Animation Nodes and save the user settings.")
             col.label("2. Restart Blender and remove the addon (without enabling it first).")
 
+def Struct(*args, **kwargs):
+    name = kwargs.pop("name", "MyStruct")
+    kwargs.update(dict((k, None) for k in args))
+    return type(name, (object,), kwargs)
+
+class DefaultPreferences:
+    developer = Struct(debug=False, runTests=False)
+    nodeColors = Struct(nodeColorMode="NETWORKS", mainNetwork=[0.7, 0.7, 0.7])
+    executionCode = Struct(type="DEFAULT")
+
 def getPreferences():
-    return bpy.context.user_preferences.addons[addonName].preferences
+    addon = bpy.context.user_preferences.addons.get(addonName)
+    if addon:
+        return addon.preferences
+    else:
+        return DefaultPreferences()
 
 def getDeveloperSettings():
     return getPreferences().developer
