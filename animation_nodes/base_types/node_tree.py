@@ -14,10 +14,10 @@ from .. execution.units import getMainUnitsByNodeTree, setupExecutionUnits, fini
 class LastTreeExecutionInfo(bpy.types.PropertyGroup):
     bl_idname = "an_LastTreeExecutionInfo"
 
-    isDefault = BoolProperty(default = True)
-    executionTime = FloatProperty(name = "Execution Time")
-    blenderVersion = IntVectorProperty(name = "Blender Version", default = (2, 77, 0))
-    animationNodesVersion = IntVectorProperty(name = "Animation Nodes Version", default = (1, 0, 1))
+    isDefault: BoolProperty(default = True)
+    executionTime: FloatProperty(name = "Execution Time")
+    blenderVersion: IntVectorProperty(name = "Blender Version", default = (2, 77, 0))
+    animationNodesVersion: IntVectorProperty(name = "Animation Nodes Version", default = (1, 0, 1))
 
     def updateVersions(self):
         self.blenderVersion = getBlenderVersion()
@@ -38,16 +38,16 @@ class LastTreeExecutionInfo(bpy.types.PropertyGroup):
 
 class AnimationNodeTree(bpy.types.NodeTree):
     bl_idname = "an_AnimationNodeTree"
-    bl_label = "Animation"
-    bl_icon = "ACTION"
+    bl_label = "Animation Nodes"
+    bl_icon = "ONIONSKIN_ON"
 
-    autoExecution = PointerProperty(type = AutoExecutionProperties)
-    lastExecutionInfo = PointerProperty(type = LastTreeExecutionInfo)
+    autoExecution: PointerProperty(type = AutoExecutionProperties)
+    lastExecutionInfo: PointerProperty(type = LastTreeExecutionInfo)
 
-    sceneName = StringProperty(name = "Scene",
+    globalScene: PointerProperty(type = bpy.types.Scene, name = "Scene",
         description = "The global scene used by this node tree (never none)")
 
-    editNodeLabels = BoolProperty(name = "Edit Node Labels", default = False)
+    editNodeLabels: BoolProperty(name = "Edit Node Labels", default = False)
 
     def update(self):
         treeChanged()
@@ -120,10 +120,7 @@ class AnimationNodeTree(bpy.types.NodeTree):
 
     @property
     def scene(self):
-        scene = bpy.data.scenes.get(self.sceneName)
-        if scene is None:
-            scene = bpy.data.scenes[0]
-        return scene
+        return bpy.data.scenes[0] if self.globalScene is None else self.globalScene
 
     @property
     def timeSinceLastAutoExecution(self):
@@ -137,9 +134,7 @@ class AnimationNodeTree(bpy.types.NodeTree):
     def subprogramNetworks(self):
         return getSubprogramNetworksByNodeTree(self)
 
-@eventHandler("SCENE_UPDATE_POST")
-def updateSelectedScenes(scene):
+@eventHandler("ALWAYS")
+def updateSelectedScenes():
     for tree in getAnimationNodeTrees():
-        scene = tree.scene
-        if scene.name != tree.sceneName:
-            tree.sceneName = scene.name
+            tree.globalScene = tree.scene

@@ -1,7 +1,6 @@
 import bpy
 from bpy.props import *
 from .. utils.blender_ui import getDpiFactor
-from .. utils.id_reference import tryToFindObjectReference
 
 triggerTypeItems = [
     ("MONITOR_PROPERTY", "Monitor Property", "", "", 0)]
@@ -13,15 +12,16 @@ idTypeItems = [
 class AutoExecutionTrigger_MonitorProperty(bpy.types.PropertyGroup):
     bl_idname = "an_AutoExecutionTrigger_MonitorProperty"
 
-    idType = EnumProperty(name = "ID Type", default = "OBJECT",
+    idType: EnumProperty(name = "ID Type", default = "OBJECT",
         items = idTypeItems)
 
-    idObjectName = StringProperty(name = "ID Object Name", default = "")
-    dataPath = StringProperty(name = "Data Path", default = "")
+    object: PointerProperty(type = bpy.types.Object, name = "Object")
+    scene: PointerProperty(type = bpy.types.Scene, name = "Scene")
+    dataPath: StringProperty(name = "Data Path", default = "")
 
-    lastState = StringProperty(default = "")
-    enabled = BoolProperty(default = True)
-    hasError = BoolProperty(default = False)
+    lastState: StringProperty(default = "")
+    enabled: BoolProperty(default = True)
+    hasError: BoolProperty(default = False)
 
     def update(self):
         lastState = self.lastState
@@ -52,19 +52,14 @@ class AutoExecutionTrigger_MonitorProperty(bpy.types.PropertyGroup):
 
     def getObject(self):
         if self.idType == "OBJECT":
-            return bpy.data.objects.get(self.idObjectName)
+            return self.object
         elif self.idType == "SCENE":
-            return bpy.data.scenes.get(self.idObjectName)
-
-    def updateNameProperty(self):
-        if self.idType == "OBJECT":
-            object = tryToFindObjectReference(self.idObjectName)
-            self.idObjectName = getattr(object, "name", "")
+            return self.scene
 
     def draw(self, layout, index):
         row = layout.row(align = True)
         if self.hasError:
-            row.label("", icon = "ERROR")
+            row.label(text = "", icon = "ERROR")
 
         icon = "LAYER_ACTIVE" if self.enabled else "LAYER_USED"
         row.prop(self, "enabled", icon = icon, text = "")
@@ -75,9 +70,9 @@ class AutoExecutionTrigger_MonitorProperty(bpy.types.PropertyGroup):
         props.index = index
 
         if self.idType == "OBJECT":
-            row.prop_search(self, "idObjectName", bpy.context.scene, "objects", text = "")
+            row.prop(self, "object", text = "")
         elif self.idType == "SCENE":
-            row.prop_search(self, "idObjectName", bpy.data, "scenes", text = "")
+            row.prop(self, "scene", text = "")
 
         row.prop(self, "dataPath", text = "")
 
@@ -89,7 +84,7 @@ class AutoExecutionTrigger_MonitorProperty(bpy.types.PropertyGroup):
 class CustomAutoExecutionTriggers(bpy.types.PropertyGroup):
     bl_idname = "an_CustomAutoExecutionTriggers"
 
-    monitorPropertyTriggers = CollectionProperty(type = AutoExecutionTrigger_MonitorProperty)
+    monitorPropertyTriggers: CollectionProperty(type = AutoExecutionTrigger_MonitorProperty)
 
     def new(self, type, **kwargs):
         if type == "MONITOR_PROPERTY":
@@ -102,35 +97,31 @@ class CustomAutoExecutionTriggers(bpy.types.PropertyGroup):
         triggers = [trigger.update() for trigger in self.monitorPropertyTriggers]
         return any(triggers)
 
-    def updateProperties(self):
-        for trigger in self.monitorPropertyTriggers:
-            trigger.updateNameProperty()
-
 
 class AutoExecutionProperties(bpy.types.PropertyGroup):
 
-    customTriggers = PointerProperty(type = CustomAutoExecutionTriggers)
+    customTriggers: PointerProperty(type = CustomAutoExecutionTriggers)
 
-    enabled = BoolProperty(default = True, name = "Enabled",
+    enabled: BoolProperty(default = True, name = "Enabled",
         description = "Enable auto execution for this node tree")
 
-    sceneUpdate = BoolProperty(default = True, name = "Scene Update",
+    sceneUpdate: BoolProperty(default = True, name = "Scene Update",
         description = "Execute many times per second to react on all changes in real time (deactivated during preview rendering)")
 
-    frameChanged = BoolProperty(default = False, name = "Frame Changed",
+    frameChanged: BoolProperty(default = False, name = "Frame Changed",
         description = "Execute after the frame changed")
 
-    propertyChanged = BoolProperty(default = False, name = "Property Changed",
+    propertyChanged: BoolProperty(default = False, name = "Property Changed",
         description = "Execute when a attribute in a animation node tree changed")
 
-    treeChanged = BoolProperty(default = False, name = "Tree Changed",
+    treeChanged: BoolProperty(default = False, name = "Tree Changed",
         description = "Execute when the node tree changes (create/remove links and nodes)")
 
-    minTimeDifference = FloatProperty(name = "Min Time Difference",
+    minTimeDifference: FloatProperty(name = "Min Time Difference",
         description = "Auto execute not that often; E.g. only every 0.5 seconds",
         default = 0.0, min = 0.0, soft_max = 1.0)
 
-    lastExecutionTimestamp = FloatProperty(default = 0.0)
+    lastExecutionTimestamp: FloatProperty(default = 0.0)
 
 
 class AddAutoExecutionTrigger(bpy.types.Operator):
@@ -138,10 +129,10 @@ class AddAutoExecutionTrigger(bpy.types.Operator):
     bl_label = "Add Auto Execution Trigger"
     bl_options = {"UNDO"}
 
-    triggerType = EnumProperty(name = "Trigger Type", default = "MONITOR_PROPERTY",
+    triggerType: EnumProperty(name = "Trigger Type", default = "MONITOR_PROPERTY",
         items = triggerTypeItems)
 
-    idType = EnumProperty(name = "ID Type", default = "OBJECT",
+    idType: EnumProperty(name = "ID Type", default = "OBJECT",
         items = idTypeItems)
 
     @classmethod
@@ -174,8 +165,8 @@ class RemoveAutoExecutionTrigger(bpy.types.Operator):
     bl_label = "Remove Auto Execution Trigger"
     bl_options = {"UNDO"}
 
-    triggerType = EnumProperty(items = triggerTypeItems)
-    index = IntProperty()
+    triggerType: EnumProperty(items = triggerTypeItems)
+    index: IntProperty()
 
     @classmethod
     def poll(cls, context):
@@ -195,7 +186,7 @@ class AssignActiveObjectToAutoExecutionTrigger(bpy.types.Operator):
     bl_label = "Assign Active Object to Auto Execution Trigger"
     bl_options = {"UNDO"}
 
-    index = IntProperty()
+    index: IntProperty()
 
     @classmethod
     def poll(cls, context):
@@ -205,7 +196,7 @@ class AssignActiveObjectToAutoExecutionTrigger(bpy.types.Operator):
         tree = context.space_data.node_tree
         trigger = tree.autoExecution.customTriggers.monitorPropertyTriggers[self.index]
         if trigger.idType == "OBJECT":
-            trigger.idObjectName = getattr(context.active_object, "name", "")
+            trigger.object = context.active_object
         if trigger.idType == "SCENE":
-            trigger.idObjectName = getattr(context.scene, "name", "")
+            trigger.scene = context.scene
         return {"FINISHED"}

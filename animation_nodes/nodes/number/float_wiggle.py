@@ -8,7 +8,7 @@ class FloatWiggleNode(bpy.types.Node, AnimationNode):
     bl_idname = "an_FloatWiggleNode"
     bl_label = "Number Wiggle"
 
-    nodeSeed = IntProperty(update = propertyChanged)
+    nodeSeed: IntProperty(update = propertyChanged)
 
     def setup(self):
         self.randomizeNodeSeed()
@@ -25,7 +25,7 @@ class FloatWiggleNode(bpy.types.Node, AnimationNode):
     def draw(self, layout):
         layout.prop(self, "nodeSeed", text = "Node Seed")
 
-    def getExecutionCode(self):
+    def getExecutionCode(self, required):
         yield "number = algorithms.perlin_noise.perlinNoiseForNodes(seed, self.nodeSeed, evolution, speed, amplitude, octaves, persistance)"
 
     def duplicate(self, sourceNode):

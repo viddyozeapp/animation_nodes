@@ -86,12 +86,12 @@ class TransformDataType(CompoundIDKeyDataType):
             col = row.column(align = True)
             if label == "Rotation":
                 label += " ({})".format(cls.getRotationOrder(object, name))
-            col.label(label)
+            col.label(text = label)
             col.prop(object, path, text = "")
 
     @classmethod
     def drawExtras(cls, layout, object, name):
-        props = layout.operator("an.id_key_from_current_transforms", icon = "ROTACTIVE")
+        props = layout.operator("an.id_key_from_current_transforms", icon = "PIVOT_ACTIVE")
         props.name = name
 
     @classmethod

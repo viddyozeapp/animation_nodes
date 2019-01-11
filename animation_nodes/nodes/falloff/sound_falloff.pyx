@@ -2,9 +2,8 @@ import bpy
 from bpy.props import *
 from ... base_types import AnimationNode
 from . constant_falloff import ConstantFalloff
+from ... data_structures cimport AverageSound, BaseFalloff, Interpolation
 from . interpolate_list_falloff import createIndexBasedFalloff, createFalloffBasedFalloff
-from ... data_structures cimport (AverageSound, BaseFalloff, CompoundFalloff,
-                                  DoubleList, Interpolation)
 
 soundTypeItems = [
     ("AVERAGE", "Average", "", "FORCE_TURBULENCE", 0),
@@ -30,22 +29,24 @@ class SoundFalloffNode(bpy.types.Node, AnimationNode):
     bl_idname = "an_SoundFalloffNode"
     bl_label = "Sound Falloff"
 
-    soundType = EnumProperty(name = "Sound Type", default = "AVERAGE",
+    __annotations__ = {}
+
+    __annotations__["soundType"] = EnumProperty(name = "Sound Type", default = "AVERAGE",
         items = soundTypeItems, update = AnimationNode.refresh)
 
-    averageFalloffType = EnumProperty(name = "Average Falloff Type", default = "INDEX_OFFSET",
+    __annotations__["averageFalloffType"] = EnumProperty(name = "Average Falloff Type", default = "INDEX_OFFSET",
         items = averageFalloffTypeItems, update = AnimationNode.refresh)
 
-    spectrumFalloffType = EnumProperty(name = "Spectrum Falloff Type", default = "INDEX_FREQUENCY",
+    __annotations__["spectrumFalloffType"] = EnumProperty(name = "Spectrum Falloff Type", default = "INDEX_FREQUENCY",
         items = spectrumFalloffTypeItems, update = AnimationNode.refresh)
 
-    indexFrequencyExtensionType = EnumProperty(name = "Index Frequency Extension Type", default = "LOOP",
+    __annotations__["indexFrequencyExtensionType"] = EnumProperty(name = "Index Frequency Extension Type", default = "LOOP",
         items = indexFrequencyExtensionTypeItems, update = AnimationNode.refresh)
 
-    fadeLowFrequenciesToZero = BoolProperty(name = "Fade Low Frequencies to Zero", default = False)
-    fadeHighFrequenciesToZero = BoolProperty(name = "Fade High Frequencies to Zero", default = False)
+    __annotations__["fadeLowFrequenciesToZero"] = BoolProperty(name = "Fade Low Frequencies to Zero", default = False)
+    __annotations__["fadeHighFrequenciesToZero"] = BoolProperty(name = "Fade High Frequencies to Zero", default = False)
 
-    useCurrentFrame = BoolProperty(name = "Use Current Frame", default = True,
+    __annotations__["useCurrentFrame"] = BoolProperty(name = "Use Current Frame", default = True,
         update = AnimationNode.refresh)
 
     def create(self):
@@ -81,11 +82,11 @@ class SoundFalloffNode(bpy.types.Node, AnimationNode):
 
     def drawAdvanced(self, layout):
         col = layout.column(align = True)
-        col.label("Fade to zero:")
+        col.label(text = "Fade to zero:")
         col.prop(self, "fadeLowFrequenciesToZero", text = "Low Frequencies")
         col.prop(self, "fadeHighFrequenciesToZero", text = "High Frequencies")
 
-    def getExecutionCode(self):
+    def getExecutionCode(self, required):
         yield "if sound is not None and sound.type == self.soundType:"
         if self.useCurrentFrame: yield "    _frame = self.nodeTree.scene.frame_current_final"
         else:                    yield "    _frame = frame"
@@ -117,7 +118,7 @@ class SoundFalloffNode(bpy.types.Node, AnimationNode):
         return createFalloffBasedFalloff(falloff, myList, interpolation)
 
     def getFrequenciesAtFrame(self, sound, frame):
-        myList = DoubleList.fromValues(sound.evaluate(frame))
+        myList = sound.evaluate(frame)
         if self.fadeLowFrequenciesToZero:
             myList = [0] + myList
         if self.fadeHighFrequenciesToZero:
@@ -133,8 +134,8 @@ cdef class Average_IndexOffset_SoundFalloff(BaseFalloff):
         self.sound = sound
         self.frame = frame
         self.offsetInverse = 1 / offset if offset != 0 else 0
-        self.dataType = "All"
+        self.dataType = "None"
         self.clamped = False
 
-    cdef double evaluate(self, void *object, long index):
+    cdef float evaluate(self, void *object, Py_ssize_t index):
         return self.sound.evaluate(self.frame - index * self.offsetInverse)

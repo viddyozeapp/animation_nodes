@@ -8,9 +8,9 @@ class VectorWiggleNode(bpy.types.Node, AnimationNode):
     bl_idname = "an_VectorWiggleNode"
     bl_label = "Vector Wiggle"
 
-    nodeSeed = IntProperty(update = propertyChanged)
+    nodeSeed: IntProperty(update = propertyChanged)
 
-    createList = BoolProperty(name = "Create List", default = False,
+    createList: BoolProperty(name = "Create List", default = False,
         update = AnimationNode.refresh)
 
     def setup(self):
@@ -36,7 +36,7 @@ class VectorWiggleNode(bpy.types.Node, AnimationNode):
         row.prop(self, "nodeSeed", text = "Node Seed")
         row.prop(self, "createList", text = "", icon = "LINENUMBERS_ON")
 
-    def getExecutionCode(self):
+    def getExecutionCode(self, required):
         if self.createList:
             yield "_seed = seed * 23452 + self.nodeSeed * 643523"
             yield "vectors = algorithms.perlin_noise.wiggleVectorList(count, _seed + evolution * speed / 20, amplitude, octaves, persistance)"

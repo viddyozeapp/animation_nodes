@@ -9,15 +9,15 @@ class CopyIDKeyMenuOpener(bpy.types.Operator):
     bl_label = "Open Copy ID Key Menu"
     bl_options = {"INTERNAL"}
 
-    keyDataType = StringProperty()
-    keyName = StringProperty()
+    keyDataType: StringProperty()
+    keyName: StringProperty()
 
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
 
     def invoke(self, context, event):
-        context.window_manager.popup_menu(self.drawMenu, title = "Copy ID Key", icon = "GHOST")
+        context.window_manager.popup_menu(self.drawMenu, title = "Copy ID Key", icon = "COPYDOWN")
         return {"FINISHED"}
 
     def drawMenu(self, menu, context):

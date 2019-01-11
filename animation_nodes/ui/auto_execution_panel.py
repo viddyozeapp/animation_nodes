@@ -8,7 +8,6 @@ class AutoExecutionPanel(bpy.types.Panel):
     bl_label = "Auto Execution"
     bl_space_type = "NODE_EDITOR"
     bl_region_type = "TOOLS"
-    bl_category = "Animation Nodes"
 
     @classmethod
     def poll(cls, context):
@@ -29,7 +28,7 @@ class AutoExecutionPanel(bpy.types.Panel):
         isRendering = isViewportRendering()
 
         if not canExecute():
-            layout.label("Look in the 'Problems' panel", icon = "INFO")
+            layout.label(text = "Look in the 'Problems' panel", icon = "INFO")
 
         layout.active = autoExecution.enabled
 
@@ -47,7 +46,7 @@ class AutoExecutionPanel(bpy.types.Panel):
         layout.prop(autoExecution, "minTimeDifference", slider = True)
 
         col = layout.column()
-        col.operator("an.add_auto_execution_trigger", text = "New Trigger", icon = "ZOOMIN")
+        col.operator("an.add_auto_execution_trigger", text = "New Trigger", icon = "ADD")
         customTriggers = autoExecution.customTriggers
 
         subcol = col.column(align = True)

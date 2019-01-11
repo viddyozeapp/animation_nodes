@@ -10,7 +10,7 @@ class EulerWiggleNode(bpy.types.Node, AnimationNode):
     bl_idname = "an_EulerWiggleNode"
     bl_label = "Euler Wiggle"
 
-    nodeSeed = IntProperty(update = propertyChanged)
+    nodeSeed: IntProperty(update = propertyChanged)
 
     def setup(self):
         self.randomizeNodeSeed()
@@ -27,7 +27,7 @@ class EulerWiggleNode(bpy.types.Node, AnimationNode):
     def draw(self, layout):
         layout.prop(self, "nodeSeed", text = "Node Seed")
 
-    def getExecutionCode(self):
+    def getExecutionCode(self, required):
         yield "euler = Euler(algorithms.perlin_noise.perlinNoiseVectorForNodes(seed, self.nodeSeed, evolution, speed, amplitude, octaves, persistance))"
 
     def duplicate(self, sourceNode):

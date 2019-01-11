@@ -2,7 +2,7 @@ import bpy
 from bpy.props import *
 from . operators.callbacks import executeCallback
 from . data_structures import (Vector3DList, EdgeIndicesList, PolygonIndicesList,
-                               FloatList, DoubleList, UShortList, LongList)
+                               FloatList, UShortList, UIntegerList, Vector2DList)
 
 def register():
     bpy.types.Context.getActiveAnimationNodeTree = getActiveAnimationNodeTree
@@ -67,12 +67,23 @@ class MeshProperties(bpy.types.PropertyGroup):
     def getPolygonAreas(self):
         areas = FloatList(length = len(self.mesh.polygons))
         self.mesh.polygons.foreach_get("area", areas.asMemoryView())
-        return DoubleList.fromValues(areas)
+        return areas
 
     def getPolygonMaterialIndices(self):
         indices = UShortList(length = len(self.mesh.polygons))
         self.mesh.polygons.foreach_get("material_index", indices.asMemoryView())
-        return LongList.fromValues(indices)
+        return indices
+
+    def getLoopEdges(self):
+        loopEdges = UIntegerList(length = len(self.mesh.loops))
+        self.mesh.loops.foreach_get("edge_index", loopEdges.asMemoryView())
+        return loopEdges
+
+    def getUVMap(self, name):
+        uvLayer = self.mesh.uv_layers[name]
+        uvMap = Vector2DList(length = len(self.mesh.loops))
+        uvLayer.data.foreach_get("uv", uvMap.asMemoryView())
+        return uvMap
 
     @property
     def mesh(self):
@@ -81,21 +92,18 @@ class MeshProperties(bpy.types.PropertyGroup):
 class ObjectProperties(bpy.types.PropertyGroup):
     bl_idname = "an_ObjectProperties"
 
-    def getMesh(self, scene, applyModifiers = False):
-        if scene is None: return None
+    def getMesh(self, depsgraph, applyModifiers = False):
+        if depsgraph is None: return None
         object = self.id_data
-
-        from . events import isRendering
-        settings = "RENDER" if isRendering() else "PREVIEW"
 
         if not applyModifiers and object.type == "MESH":
             return object.data
         else:
-            try: return object.to_mesh(scene, applyModifiers, settings)
+            try: return object.to_mesh(depsgraph, applyModifiers)
             except: return None
 
 class IDProperties(bpy.types.PropertyGroup):
     bl_idname = "an_IDProperties"
 
-    removeOnZeroUsers = BoolProperty(default = False,
+    removeOnZeroUsers: BoolProperty(default = False,
         description = "Data block should be removed when it has no users")
